@@ -7,7 +7,10 @@
         "obs": "application/vnd.mami.ndjson",
         "test": "application/json"
     },
-    "APIKeyFile": "./testdata/testkeys.json",
+    "Authorizer": "keyfile",
+    "AuthorizerConfig": {
+        "APIKeyFile": "./testdata/testkeys.json"
+    },
     "ObsDatabase": {
         "Addr": ":5432",
         "Database": "ptotest",

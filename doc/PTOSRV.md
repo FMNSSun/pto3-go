@@ -29,7 +29,8 @@ The following keys should appear the config file:
 | `BaseURL`         | Base URL of PTO, used for link generation                                         |
 | `AccessLogPath`   | Filename for access logging; log to stderr if missing or empty                    |
 | `ContentTypes`    | Object mapping PTO `_file_type` values to MIME content types                      |
-| `APIKeyFile`      | Filename of API key file for access control; see below for details                |
+| `Authorizer`      | Authorization provider                                                            |
+| `AuthorizerConfig`| Config for the Authorizer. 
 | `RawRoot`         | Filesystem root for raw data storage; disable `/raw` if missing or empty          |
 | `ObsDatabase`     | Object configuring database connection as below; disable `/obs` if missing        |
 | `QueryCacheRoot`  | Filesystem root for query cache; disable `/query` if missing or empty             |
@@ -63,6 +64,28 @@ otherwise. The following permissions are used by ptosrv:
 
 The special API key `default` allows the assignment of permissions for
 requests without an `Authorization: APIKEY` header.
+
+### Authorization Providers
+
+| Authorizer | Description               |
+| ---------- | ------------------------- |
+| `keyfile`  | Use a local JSON key file |
+
+#### keyfile
+
+AuthorizerConfig
+
+| Key        | Description               |
+| ---------- | ------------------------- |
+| APIKeyFile | Path to the JSON key file |
+
+**Example**:
+
+```
+"AuthorizerConfig": {
+    "APIKeyFile": "./testdata/testkeys.json"
+}
+```
 
 ## Invocation
 

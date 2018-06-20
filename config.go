@@ -10,6 +10,7 @@ import (
 	"github.com/go-pg/pg"
 )
 
+
 // PTOConfiguration contains a configuration of a PTO server
 type PTOConfiguration struct {
 	// Address/port to bind to
@@ -20,8 +21,11 @@ type PTOConfiguration struct {
 	// ...this right here is effing annoying but i'm not writing a custom unmarshaler just for that...
 	baseURL *url.URL
 
-	// API key file path
-	APIKeyFile string
+	// Authorization Config
+	AuthorizerConfig map[string]interface{}
+
+	// Authorization Provider
+	Authorizer string
 
 	// Certificate file path
 	CertificateFile string

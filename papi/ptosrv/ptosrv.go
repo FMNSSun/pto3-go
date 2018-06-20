@@ -32,9 +32,24 @@ func main() {
 	log.Printf("ptosrv starting with configuration at %s...", *configPath)
 
 	// create an API key authorizer
-	azr, err := papi.LoadAPIKeys(config.APIKeyFile)
-	if err != nil {
-		log.Fatal(err)
+	var azr papi.Authorizer = nil	
+
+
+	if config.Authorizer == "keyfile" {
+		keyFilePathEntry := config.AuthorizerConfig["APIKeyFile"]
+		keyFilePath, ok := keyFilePathEntry.(string)
+
+		if !ok {
+			log.Fatal("Invalid config for authorization provider %q", config.Authorizer)
+		}
+
+		azr, err = papi.LoadAPIKeys(keyFilePath)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		log.Fatal("Unknown authorization provider %q", config.Authorizer)
 	}
 
 	// now hook up routes
