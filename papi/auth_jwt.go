@@ -1,0 +1,82 @@
+// Path Transparency Observatory JWT-based authorization
+
+package papi
+
+import (
+	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/dgrijalva/jwt-go"
+)
+
+
+type JWTAuthorizer struct {
+	// The secret
+	Key []byte
+}
+
+
+func (azr *JWTAuthorizer) IsAuthorized(w http.ResponseWriter, r *http.Request, permission string) bool {
+	// look for an authorization header
+	authhdr := r.Header.Get("Authorization")
+
+	if authhdr != "" {
+
+		authfield := strings.Fields(authhdr)
+
+		if len(authfield) < 2 {
+			http.Error(w, fmt.Sprintf("malformed Authorization header: %v", authhdr), http.StatusBadRequest)
+			return false
+		} else if authfield[0] == "Bearer" {
+			token, err := jwt.Parse(authfield[1], func(token *jwt.Token) (interface{}, error) {
+				 // only accept HMAC
+				 if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					  return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+				 }
+
+				 return azr.Key, nil
+			})
+
+			
+			if err != nil {
+				http.Error(w, fmt.Sprintf("malformed Authorization header: %v", authhdr), http.StatusBadRequest)
+				return false
+			}
+
+			if !token.Valid {
+				http.Error(w, fmt.Sprintf("token is not valid!", authhdr), http.StatusBadRequest)
+				return false
+			}
+
+			claims, ok := token.Claims.(jwt.MapClaims)
+
+			if !ok {
+				http.Error(w, fmt.Sprintf("invalid claims!", authhdr), http.StatusBadRequest)
+				return false
+			}
+
+			permEntry := claims[permission]
+
+			if permEntry == nil {
+				http.Error(w, fmt.Sprintf("not authorized for %v", authhdr), http.StatusForbidden)
+				return false
+			}
+
+			perm, ok := permEntry.(bool)
+
+			if !perm || !ok {
+				http.Error(w, fmt.Sprintf("not authorized for %v", authhdr), http.StatusForbidden)
+				return false
+			}
+
+			return true
+		} else {
+			http.Error(w, fmt.Sprintf("unsupported authorization type %s", authfield[0]), http.StatusBadRequest)
+			return false
+		}
+	} 
+
+	http.Error(w, fmt.Sprintf("malformed Authorization header: %v", authhdr), http.StatusBadRequest)
+	return false
+}
