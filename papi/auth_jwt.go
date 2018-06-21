@@ -81,6 +81,13 @@ func (azr *JWTAuthorizer) IsAuthorized(w http.ResponseWriter, r *http.Request, p
 				return false
 			}
 
+			validErr := claims.Valid()
+				
+			if validErr != nil {
+				http.Error(w, fmt.Sprintf("validation error: %v", validErr.Error()), http.StatusBadRequest)
+				return false
+			}
+
 			permEntry := claims[permission]
 
 			if permEntry == nil {
