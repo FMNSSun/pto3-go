@@ -42,8 +42,6 @@ func (azr *APIKeyAuthorizer) Configure(config map[string]interface{}) error {
 		return fmt.Errorf("Invalid config!")
 	}
 
-	var _azr APIKeyAuthorizer
-
 	b, err := ioutil.ReadFile(keyFilePath)
 	if err != nil {
 		return err
@@ -53,8 +51,6 @@ func (azr *APIKeyAuthorizer) Configure(config map[string]interface{}) error {
 	if err != nil {
 		return err
 	}
-
-	azr.APIKeys = _azr.APIKeys
 
 	return nil
 }
