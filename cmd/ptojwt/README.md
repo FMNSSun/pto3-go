@@ -4,6 +4,8 @@
 Usage of ./ptojwt:
   -action string
     	gen[erate] or val[idate] (default "gen")
+  -duration int
+    	Duration in days (only valid for generate) (default 360)
   -permissions string
     	Permissions (only valid for generate, semi-colon separated)
   -secret string

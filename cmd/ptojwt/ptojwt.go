@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -17,6 +18,7 @@ func main() {
 	secret := flag.String("secret", "", "Secret (for HMAC)")
 	token := flag.String("token", "", "JWT Token")
 	perms := flag.String("permissions", "", "Permissions (only valid for generate, semi-colon separated)")
+	dur := flag.Int("duration", 360, "Duration in days (only valid for generate)")
 
 	flag.Parse()
 
@@ -55,7 +57,7 @@ func main() {
 
 	switch *action {
 	case "gen", "generate":
-		generate(*sub, *perms, secretBytes)
+		generate(*dur, *sub, *perms, secretBytes)
 	case "val", "validate":
 		validate(*token, secretBytes)
 	}
@@ -73,7 +75,7 @@ func readln(reader *bufio.Reader, msg string, args... interface{}) string {
 	return strings.Trim(line, "\r\t\n ")
 }
 
-func generate(sub, permStr string, secret []byte) {
+func generate(dur int, sub, permStr string, secret []byte) {
 	mapClaims := jwt.MapClaims{}
 	
 	perms := strings.Split(permStr, ";")
@@ -87,6 +89,13 @@ func generate(sub, permStr string, secret []byte) {
 	}
 
 	mapClaims["sub"] = sub
+	mapClaims["iat"] = time.Now().Unix()
+	mapClaims["nbf"] = time.Now().Unix()
+	mapClaims["iss"] = "pto"
+
+	day := time.Hour * 24
+
+	mapClaims["exp"] = time.Now().Add(time.Duration(dur) * day).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, mapClaims)
 
@@ -117,6 +126,18 @@ func validate(str string, secret []byte) {
 		log.Fatal("Token is not valid!")
 	} else {
 		log.Println("Token is valid!")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+
+	if !ok {
+		log.Fatal("Invalid claims!")
+	}
+
+	validErr := claims.Valid()
+		
+	if validErr != nil {
+		log.Fatalf("validation error: %v", validErr.Error())
 	}
 
 	log.Println(token.Claims)
