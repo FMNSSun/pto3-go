@@ -26,8 +26,10 @@ type Authorizer interface {
 
 	// Configure the Authorizer based on the supplied config.
 	// Must return nil if success, error otherwise. 
-	Configure(config map[string]interface{}) error
+	Configure(config AuthorizerConfig) error
 }
+
+type AuthorizerConfig map[string]interface{}
 
 type APIKeyAuthorizer struct {
 	// Map of API key strings to maps of permission strings to boolean permissions

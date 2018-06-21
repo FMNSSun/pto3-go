@@ -6,21 +6,22 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"encoding/base64"
 
 	"github.com/dgrijalva/jwt-go"
 )
 
 
 type JWTAuthorizer struct {
-	// The secret
+	// The secret (base64 encoded)
 	Key []byte
 }
 
-func (azr *JWTAuthorizer) Configure(authConfig map[string]interface{}) error {
-	keyEntry := authConfig["key"]
+func (azr *JWTAuthorizer) Configure(config map[string]interface{}) error {
+	keyEntry := config["key"]
 
 	if keyEntry == nil {
-		keyEntry = authConfig["secret"]
+		keyEntry = config["secret"]
 	}
 
 	key, ok := keyEntry.(string)
@@ -29,7 +30,13 @@ func (azr *JWTAuthorizer) Configure(authConfig map[string]interface{}) error {
 		return fmt.Errorf("Invalid config!")
 	}
 
-	azr.Key = []byte(key)
+	keyBytes, err := base64.StdEncoding.DecodeString(key)
+
+	if err != nil {
+		return err
+	}
+
+	azr.Key = keyBytes
 
 	return nil
 }
