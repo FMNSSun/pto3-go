@@ -16,6 +16,24 @@ type JWTAuthorizer struct {
 	Key []byte
 }
 
+func (azr *JWTAuthorizer) Configure(authConfig map[string]interface{}) error {
+	keyEntry := authConfig["key"]
+
+	if keyEntry == nil {
+		keyEntry = authConfig["secret"]
+	}
+
+	key, ok := keyEntry.(string)
+
+	if !ok {
+		return fmt.Errorf("Invalid config!")
+	}
+
+	azr.Key = []byte(key)
+
+	return nil
+}
+
 
 func (azr *JWTAuthorizer) IsAuthorized(w http.ResponseWriter, r *http.Request, permission string) bool {
 	// look for an authorization header

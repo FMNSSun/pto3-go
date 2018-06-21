@@ -23,11 +23,40 @@ import (
 
 type Authorizer interface {
 	IsAuthorized(http.ResponseWriter, *http.Request, string) bool
+
+	// Configure the Authorizer based on the supplied config.
+	// Must return nil if success, error otherwise. 
+	Configure(config map[string]interface{}) error
 }
 
 type APIKeyAuthorizer struct {
 	// Map of API key strings to maps of permission strings to boolean permissions
 	APIKeys map[string]map[string]bool
+}
+
+func (azr *APIKeyAuthorizer) Configure(config map[string]interface{}) error {
+	keyFilePathEntry := config["APIKeyFile"]
+	keyFilePath, ok := keyFilePathEntry.(string)
+
+	if !ok {
+		return fmt.Errorf("Invalid config!")
+	}
+
+	var _azr APIKeyAuthorizer
+
+	b, err := ioutil.ReadFile(keyFilePath)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(b, &azr.APIKeys)
+	if err != nil {
+		return err
+	}
+
+	azr.APIKeys = _azr.APIKeys
+
+	return nil
 }
 
 func (azr *APIKeyAuthorizer) IsAuthorized(w http.ResponseWriter, r *http.Request, permission string) bool {
@@ -76,22 +105,6 @@ func (azr *APIKeyAuthorizer) IsAuthorized(w http.ResponseWriter, r *http.Request
 		return false
 	}
 
-}
-
-func LoadAPIKeys(filename string) (*APIKeyAuthorizer, error) {
-	var azr APIKeyAuthorizer
-
-	b, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(b, &azr.APIKeys)
-	if err != nil {
-		return nil, err
-	}
-
-	return &azr, nil
 }
 
 type NullAuthorizer struct{}

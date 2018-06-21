@@ -6,6 +6,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"fmt"
 
 	"github.com/gorilla/mux"
 	pto3 "github.com/mami-project/pto3-go"
@@ -31,25 +32,11 @@ func main() {
 	}
 	log.Printf("ptosrv starting with configuration at %s...", *configPath)
 
-	// create an API key authorizer
-	var azr papi.Authorizer = nil	
+	// create the authorizer
+	azr, err := authorizerByName(config.Authorizer, config.AuthorizerConfig)
 
-
-	if config.Authorizer == "keyfile" {
-		keyFilePathEntry := config.AuthorizerConfig["APIKeyFile"]
-		keyFilePath, ok := keyFilePathEntry.(string)
-
-		if !ok {
-			log.Fatal("Invalid config for authorization provider %q", config.Authorizer)
-		}
-
-		azr, err = papi.LoadAPIKeys(keyFilePath)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		log.Fatal("Unknown authorization provider %q", config.Authorizer)
+	if err != nil {
+		log.Fatalf("Could not create authorizer %v: %v", config.Authorizer, err.Error())
 	}
 
 	// now hook up routes
@@ -103,4 +90,25 @@ func main() {
 		log.Printf("...listening INSECURELY on %s", bindto)
 		log.Fatal(http.ListenAndServe(bindto, r))
 	}
+}
+
+func authorizerByName(name string, authConfig map[string]interface{}) (papi.Authorizer, error) {
+	var azr papi.Authorizer
+
+	switch name {
+	case "keyfile", "apikeyfile":
+		azr = &papi.APIKeyAuthorizer{}
+	case "jwt":
+		azr = &papi.JWTAuthorizer{}
+	default:
+		return nil, fmt.Errorf("Unknown authorization provider %q", name)
+	}
+
+	err := azr.Configure(authConfig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return azr, nil
 }
